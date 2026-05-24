@@ -39,11 +39,32 @@ async function atualizarHistoricoNaTela() {
   }
 }
 
+async function aoClicarAlterarSenha() {
+  const novaSenha = prompt("Digite sua nova senha:");
+  if (novaSenha) {
+    try {
+      const resultado = await api.redefinirSenha(usuarioId, novaSenha);
+      if (resultado.message === "Senha atualizada com sucesso") {
+        alert("Sua senha foi alterada com sucesso!");
+      } else {
+        alert("Erro ao alterar senha: " + resultado.message);
+      }
+    } catch (error) {
+      alert("Erro na comunicação com o servidor.");
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   // Exibe o nome do usuário no cabeçalho
   const elNome = document.querySelector('#nome-usuario');
   if (elNome && usuarioData) {
     elNome.textContent = `Olá, ${usuarioData.nome}`;
+  }
+
+  const btnAlterarSenha = document.querySelector('#btn-alterar-senha');
+  if (btnAlterarSenha) {
+    btnAlterarSenha.addEventListener('click', aoClicarAlterarSenha);
   }
 
   const btnSair = document.querySelector('#btn-sair');
