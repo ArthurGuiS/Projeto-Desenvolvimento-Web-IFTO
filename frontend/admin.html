@@ -4,39 +4,77 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PontoWeb - Painel Admin</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <div style="display: flex; justify-content: space-between; align-items: center; background: #333; color: white; padding: 10px 20px;">
-        <h1 style="margin: 0; font-size: 1.5rem;">Painel do Administrador</h1>
-        <button id="btn-sair" style="background: #ff4444; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Sair</button>
-    </div>
+    <header class="admin">
+        <h1>Painel Administrador</h1>
+        <nav>
+            <button id="btn-alterar-senha" class="btn btn-warning" style="margin-right: 0.5rem;">Alterar Senha</button>
+            <button id="btn-sair" class="btn btn-danger">Sair</button>
+        </nav>
+    </header>
     
-    <div style="padding: 20px;">
-        <h2>Cadastrar Novo Funcionário</h2>
-    <form id="form-novo-func">
-        <input type="text" id="nome" placeholder="Nome" required>
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="text" id="cpf" placeholder="CPF" required>
-        <button type="submit">Cadastrar</button>
-    </form>
-    
-    <hr>
-    
-    <h2>Pesquisar Histórico de Ponto</h2>
-    <div style="margin-bottom: 20px;">
-        <input type="text" id="busca-nome" placeholder="Digite o nome do funcionário..." style="padding: 8px; width: 250px;">
-        <button id="btn-buscar" style="padding: 8px 15px; cursor: pointer;">Buscar Histórico</button>
-    </div>
-    
-    <div id="resultado-busca-historico">
-        <!-- Histórico do funcionário buscado aparecerá aqui -->
-    </div>
+    <main>
+        <section class="card">
+            <h2>Cadastrar Novo Funcionário</h2>
+            <form id="form-novo-func">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                    <div class="form-group">
+                        <label for="nome">Nome Completo</label>
+                        <input type="text" id="nome" placeholder="Nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">E-mail</label>
+                        <input type="email" id="email" placeholder="Email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="cpf">CPF</label>
+                        <input type="text" id="cpf" placeholder="000.000.000-00" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%; margin-top: 1rem;">Cadastrar Funcionário</button>
+            </form>
+        </section>
+        
+        <section class="card">
+            <h2>Gestão de Funcionários</h2>
+            <div style="margin-bottom: 2rem;">
+                <h3>Pesquisar Histórico</h3>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="text" id="busca-nome" placeholder="Digite o nome do funcionário..." style="flex: 1; min-width: 200px;">
+                    <button id="btn-buscar" class="btn btn-primary">Buscar Histórico</button>
+                </div>
+                <div id="resultado-busca-historico" class="mt-2">
+                    <!-- Histórico do funcionário buscado aparecerá aqui -->
+                </div>
+            </div>
 
-    <hr>
+            <hr style="margin: 2rem 0; border: 0; border-top: 1px solid #eee;">
 
-    <h2>Lista de Funcionários</h2>
-    <div id="lista-funcionarios">
-        <!-- Funcionários serão carregados aqui -->
+            <h3>Funcionários Ativos</h3>
+            <div id="lista-funcionarios" class="mt-2">
+                <p class="text-center" style="color: var(--text-secondary);">Carregando funcionários...</p>
+                <!-- Funcionários serão carregados aqui -->
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal Simples para Alterar Senha (Reutilizado do funcionário) -->
+    <div id="modal-senha" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 1000;">
+        <div class="card" style="max-width: 400px; width: 90%;">
+            <h3>Alterar Minha Senha</h3>
+            <form id="form-alterar-senha">
+                <div class="form-group">
+                    <label for="nova-senha">Nova Senha</label>
+                    <input type="password" id="nova-senha" required minlength="6">
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+                    <button type="button" id="btn-cancelar-senha" class="btn">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Nova Senha</button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <script src="js/api.js"></script>

@@ -1,83 +1,115 @@
-// Recupera o objeto do usuário logado
-const usuarioData = JSON.parse(localStorage.getItem('usuarioLogado'));
-const usuarioId = usuarioData ? usuarioData.id : null;
+const usuario = JSON.parse(localStorage.getItem('usuario'));
 
-// Verifica se o usuário está logado, senão redireciona para o login
-if (!usuarioId) {
-  window.location.href = 'index.html';
-}
-
-async function aoClicarBaterPonto() {
-  try {
-    const resultado = await api.baterPonto(usuarioId);
-    if (resultado.message === "Ponto registrado") {
-      const tipoFormatado = resultado.tipo === 'entrada' ? 'Entrada' : 'Saída';
-      alert(`${tipoFormatado} registrada com sucesso!`);
-      atualizarHistoricoNaTela();
-    } else {
-      alert("Falha ao registrar ponto: " + resultado.message);
+if (!usuario || usuario.role !== 'employee') {
+    if (!usuario || usuario.role !== 'admin') { // Permitir admin se necessário, mas geralmente cada um no seu painel
+        window.location.href = 'index.html';
     }
-  } catch (error) {
-    alert("Erro na comunicação com o servidor");
-  }
 }
 
-async function atualizarHistoricoNaTela() {
-  const historico = await api.buscarHistorico(usuarioId);
-  const container = document.querySelector('#historico-container');
-  if (container) {
-    container.innerHTML = historico.map(reg => {
-      const cor = reg.tipo === 'entrada' ? '#28a745' : '#dc3545';
-      const label = reg.tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA';
-      return `
-        <div class="registro" style="margin-bottom: 8px; padding: 10px; border-left: 5px solid ${cor}; background: #f9f9f9;">
-          <strong>${label}</strong> - 
-          <span>${new Date(reg.data_hora).toLocaleString('pt-BR')}</span>
-        </div>
-      `;
-    }).join('');
-  }
-}
+document.getElementById('nome-usuario').textContent = `Bem-vindo(a), ${usuario.nome}`;
 
-async function aoClicarAlterarSenha() {
-  const novaSenha = prompt("Digite sua nova senha:");
-  if (novaSenha) {
+// Carregar Histórico
+async function carregarHistorico() {
+    const container = document.getElementById('historico-container');
     try {
-      const resultado = await api.redefinirSenha(usuarioId, novaSenha);
-      if (resultado.message === "Senha atualizada com sucesso") {
-        alert("Sua senha foi alterada com sucesso!");
-      } else {
-        alert("Erro ao alterar senha: " + resultado.message);
-      }
+        const registros = await apiBuscarHistorico(usuario.id);
+        
+        if (registros.length === 0) {
+            container.innerHTML = '<p class="text-center" style="color: var(--text-secondary);">Nenhum registro encontrado.</p>';
+            return;
+        }
+
+        let html = `
+            <table class="data-list">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Hora</th>
+                        <th>Tipo</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        registros.forEach(reg => {
+            const dataHora = new Date(reg.data_hora);
+            const data = dataHora.toLocaleDateString('pt-BR');
+            const hora = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            
+            html += `
+                <tr>
+                    <td>${data}</td>
+                    <td>${hora}</td>
+                    <td>${reg.tipo.charAt(0).toUpperCase() + reg.tipo.slice(1)}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
     } catch (error) {
-      alert("Erro na comunicação com o servidor.");
+        container.innerHTML = `<p class="alert alert-danger">Erro ao carregar histórico: ${error.message}</p>`;
     }
-  }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  // Exibe o nome do usuário no cabeçalho
-  const elNome = document.querySelector('#nome-usuario');
-  if (elNome && usuarioData) {
-    elNome.textContent = `Olá, ${usuarioData.nome}`;
-  }
-
-  const btnAlterarSenha = document.querySelector('#btn-alterar-senha');
-  if (btnAlterarSenha) {
-    btnAlterarSenha.addEventListener('click', aoClicarAlterarSenha);
-  }
-
-  const btnSair = document.querySelector('#btn-sair');
-  if (btnSair) {
-    btnSair.addEventListener('click', () => {
-      localStorage.removeItem('usuarioLogado');
-      window.location.href = 'index.html';
-    });
-  }
-
-  const btnBaterPonto = document.querySelector('#btn-bater-ponto');
-  if (btnBaterPonto) {
-    btnBaterPonto.addEventListener('click', aoClicarBaterPonto);
-  }
-  atualizarHistoricoNaTela();
+// Bater Ponto
+document.getElementById('btn-bater-ponto').addEventListener('click', async () => {
+    const btn = document.getElementById('btn-bater-ponto');
+    const feedback = document.getElementById('feedback-ponto');
+    
+    btn.disabled = true;
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span class="spinner"></span> Registrando...';
+    
+    try {
+        await apiBaterPonto(usuario.id);
+        feedback.innerHTML = '<p class="alert alert-success">Ponto registrado com sucesso!</p>';
+        carregarHistorico();
+    } catch (error) {
+        feedback.innerHTML = `<p class="alert alert-danger">Erro: ${error.message}</p>`;
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+        setTimeout(() => feedback.innerHTML = '', 5000);
+    }
 });
+
+// Logout
+document.getElementById('btn-sair').addEventListener('click', () => {
+    localStorage.removeItem('usuario');
+    window.location.href = 'index.html';
+});
+
+// Alterar Senha Modal
+const modalSenha = document.getElementById('modal-senha');
+document.getElementById('btn-alterar-senha').addEventListener('click', () => {
+    modalSenha.classList.remove('hidden');
+});
+
+document.getElementById('btn-cancelar-senha').addEventListener('click', () => {
+    modalSenha.classList.add('hidden');
+});
+
+document.getElementById('form-alterar-senha').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const novaSenha = document.getElementById('nova-senha').value;
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+    
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Salvando...';
+
+    try {
+        await apiAlterarSenha(usuario.id, novaSenha);
+        alert('Senha alterada com sucesso!');
+        modalSenha.classList.add('hidden');
+        e.target.reset();
+    } catch (error) {
+        alert('Erro ao alterar senha: ' + error.message);
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Salvar';
+    }
+});
+
+// Inicialização
+carregarHistorico();

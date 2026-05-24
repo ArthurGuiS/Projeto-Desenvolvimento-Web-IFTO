@@ -1,131 +1,171 @@
-// Supondo que o api.js já foi carregado
-const usuarioData = JSON.parse(localStorage.getItem('usuarioLogado'));
+const usuario = JSON.parse(localStorage.getItem('usuario'));
 
-if (!usuarioData || usuarioData.role !== 'admin') {
-  alert("Acesso restrito a administradores.");
-  window.location.href = 'index.html';
+if (!usuario || usuario.role !== 'admin') {
+    window.location.href = 'index.html';
 }
 
-async function aoSubmeterFormularioNovoFuncionario(evento) {
-  evento.preventDefault();
-  
-  const nome = document.querySelector('#nome').value;
-  const email = document.querySelector('#email').value;
-  const cpf = document.querySelector('#cpf').value;
-
-  try {
-    const resultado = await api.criarUsuario({ nome, email, cpf });
-    if (resultado.message === "Usuário criado") {
-      alert("Funcionário cadastrado");
-      recarregarListaDeFuncionarios();
-      document.querySelector('#form-novo-func').reset();
-    } else {
-      const msg = resultado.details ? `${resultado.message}: ${resultado.details}` : resultado.message;
-      alert("Falha ao cadastrar: " + msg);
-    }
-  } catch (error) {
-    alert("Erro na comunicação com o servidor");
-  }
-}
-
-async function recarregarListaDeFuncionarios() {
-  const funcionarios = await api.listarFuncionarios();
-  const container = document.querySelector('#lista-funcionarios');
-  if (container) {
-    container.innerHTML = funcionarios.map(func => `
-      <div class="funcionario" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-            <strong>${func.nome}</strong><br>
-            <small>${func.email}</small>
-        </div>
-        <div>
-            <button onclick="promptRedefinirSenha('${func.id}', '${func.nome}')" style="background: #f0ad4e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Redefinir Senha</button>
-        </div>
-      </div>
-    `).join('');
-  }
-}
-
-async function promptRedefinirSenha(usuarioId, nome) {
-    const novaSenha = prompt(`Digite a nova senha para ${nome}:`);
-    if (novaSenha) {
-        try {
-            const resultado = await api.redefinirSenha(usuarioId, novaSenha);
-            if (resultado.message === "Senha atualizada com sucesso") {
-                alert("Senha atualizada!");
-            } else {
-                alert("Erro: " + resultado.message);
-            }
-        } catch (error) {
-            alert("Erro na comunicação com o servidor.");
+// Listar Funcionários
+async function carregarFuncionarios() {
+    const container = document.getElementById('lista-funcionarios');
+    try {
+        const funcionarios = await apiListarFuncionarios();
+        
+        if (funcionarios.length === 0) {
+            container.innerHTML = '<p class="text-center">Nenhum funcionário cadastrado.</p>';
+            return;
         }
+
+        let html = `
+            <table class="data-list">
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>E-mail</th>
+                        <th>CPF</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        funcionarios.forEach(f => {
+            html += `
+                <tr>
+                    <td>${f.nome}</td>
+                    <td>${f.email}</td>
+                    <td>${f.cpf}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table>';
+        container.innerHTML = html;
+    } catch (error) {
+        container.innerHTML = `<p class="alert alert-danger">Erro ao carregar funcionários: ${error.message}</p>`;
     }
 }
 
-async function buscarHistoricoPorNome() {
-  const nomeBusca = document.querySelector('#busca-nome').value.toLowerCase();
-  const container = document.querySelector('#resultado-busca-historico');
-  
-  if (!nomeBusca) {
-    alert("Digite um nome para buscar.");
-    return;
-  }
+// Cadastrar Funcionário
+document.getElementById('form-novo-func').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button[type="submit"]');
+    const nome = document.getElementById('nome').value;
+    const email = document.getElementById('email').value;
+    const cpf = document.getElementById('cpf').value;
 
-  container.innerHTML = "Buscando...";
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Cadastrando...';
 
-  try {
-    // 1. Listar todos os funcionários para encontrar o ID pelo nome
-    const funcionarios = await api.listarFuncionarios();
-    const funcionarioEncontrado = funcionarios.find(f => f.nome.toLowerCase().includes(nomeBusca));
-
-    if (!funcionarioEncontrado) {
-      container.innerHTML = "<p style='color: red;'>Funcionário não encontrado.</p>";
-      return;
+    try {
+        await apiCriarUsuario({ nome, email, cpf, role: 'employee' });
+        alert('Funcionário cadastrado com sucesso!');
+        e.target.reset();
+        carregarFuncionarios();
+    } catch (error) {
+        alert('Erro ao cadastrar: ' + error.message);
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Cadastrar Funcionário';
     }
-
-    // 2. Buscar o histórico pelo ID encontrado
-    const historico = await api.buscarHistorico(funcionarioEncontrado.id);
-    
-    if (historico.length === 0) {
-      container.innerHTML = `<p>Nenhum registro encontrado para <strong>${funcionarioEncontrado.nome}</strong>.</p>`;
-      return;
-    }
-
-    // 3. Renderizar o histórico
-    container.innerHTML = `<h3>Histórico de ${funcionarioEncontrado.nome}</h3>` + historico.map(reg => {
-      const cor = reg.tipo === 'entrada' ? '#28a745' : '#dc3545';
-      const label = reg.tipo === 'entrada' ? 'ENTRADA' : 'SAÍDA';
-      return `
-        <div class="registro" style="margin-bottom: 8px; padding: 10px; border-left: 5px solid ${cor}; background: #f9f9f9;">
-          <strong>${label}</strong> - 
-          <span>${new Date(reg.data_hora).toLocaleString('pt-BR')}</span>
-        </div>
-      `;
-    }).join('');
-
-  } catch (error) {
-    console.error("Erro na busca:", error);
-    container.innerHTML = "<p style='color: red;'>Erro ao buscar histórico.</p>";
-  }
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-  const btnSair = document.querySelector('#btn-sair');
-  if (btnSair) {
-    btnSair.addEventListener('click', () => {
-      localStorage.removeItem('usuarioLogado');
-      window.location.href = 'index.html';
-    });
-  }
-
-  const btnBuscar = document.querySelector('#btn-buscar');
-  if (btnBuscar) {
-    btnBuscar.addEventListener('click', buscarHistoricoPorNome);
-  }
-
-  const formNovoFunc = document.querySelector('#form-novo-func');
-  if (formNovoFunc) {
-    formNovoFunc.addEventListener('submit', aoSubmeterFormularioNovoFuncionario);
-  }
-  recarregarListaDeFuncionarios();
 });
+
+// Buscar Histórico
+document.getElementById('btn-buscar').addEventListener('click', async () => {
+    const buscaNome = document.getElementById('busca-nome').value.toLowerCase();
+    const resultadoContainer = document.getElementById('resultado-busca-historico');
+    
+    if (!buscaNome) {
+        alert('Digite o nome do funcionário para buscar.');
+        return;
+    }
+
+    try {
+        // Primeiro, precisamos achar o ID do funcionário pelo nome
+        // Como não temos uma rota de busca por nome direta que retorne ID, vamos listar todos e filtrar no client (ou poderíamos ter uma rota melhor)
+        const funcionarios = await apiListarFuncionarios();
+        const func = funcionarios.find(f => f.nome.toLowerCase().includes(buscaNome));
+
+        if (!func) {
+            resultadoContainer.innerHTML = '<p class="alert alert-danger">Funcionário não encontrado.</p>';
+            return;
+        }
+
+        const registros = await apiBuscarHistorico(func.id);
+        
+        if (registros.length === 0) {
+            resultadoContainer.innerHTML = `<p class="alert alert-warning">Nenhum ponto registrado para <strong>${func.nome}</strong>.</p>`;
+            return;
+        }
+
+        let html = `
+            <div class="card" style="background: #f1f3f5; border: 1px solid #dee2e6;">
+                <h4>Histórico de ${func.nome}</h4>
+                <table class="data-list">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Hora</th>
+                            <th>Tipo</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        registros.forEach(reg => {
+            const dataHora = new Date(reg.data_hora);
+            const data = dataHora.toLocaleDateString('pt-BR');
+            const hora = dataHora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+            html += `
+                <tr>
+                    <td>${data}</td>
+                    <td>${hora}</td>
+                    <td>${reg.tipo.charAt(0).toUpperCase() + reg.tipo.slice(1)}</td>
+                </tr>
+            `;
+        });
+
+        html += '</tbody></table></div>';
+        resultadoContainer.innerHTML = html;
+    } catch (error) {
+        resultadoContainer.innerHTML = `<p class="alert alert-danger">Erro ao buscar: ${error.message}</p>`;
+    }
+});
+
+// Logout
+document.getElementById('btn-sair').addEventListener('click', () => {
+    localStorage.removeItem('usuario');
+    window.location.href = 'index.html';
+});
+
+// Alterar Senha Modal (Reutilizado)
+const modalSenha = document.getElementById('modal-senha');
+document.getElementById('btn-alterar-senha').addEventListener('click', () => {
+    modalSenha.classList.remove('hidden');
+});
+
+document.getElementById('btn-cancelar-senha').addEventListener('click', () => {
+    modalSenha.classList.add('hidden');
+});
+
+document.getElementById('form-alterar-senha').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const novaSenha = document.getElementById('nova-senha').value;
+    const btnSubmit = e.target.querySelector('button[type="submit"]');
+    
+    btnSubmit.disabled = true;
+    btnSubmit.textContent = 'Salvando...';
+
+    try {
+        await apiAlterarSenha(usuario.id, novaSenha);
+        alert('Sua senha foi alterada com sucesso!');
+        modalSenha.classList.add('hidden');
+        e.target.reset();
+    } catch (error) {
+        alert('Erro ao alterar senha: ' + error.message);
+    } finally {
+        btnSubmit.disabled = false;
+        btnSubmit.textContent = 'Salvar Nova Senha';
+    }
+});
+
+// Inicialização
+carregarFuncionarios();
