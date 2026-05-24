@@ -22,9 +22,14 @@
     
     <hr>
     
-    <h2>Lista de Funcionários</h2>
-    <div id="lista-funcionarios">
-        <!-- Funcionários serão carregados aqui -->
+    <h2>Pesquisar Histórico de Ponto</h2>
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="busca-nome" placeholder="Digite o nome do funcionário..." style="padding: 8px; width: 250px;">
+        <button id="btn-buscar" style="padding: 8px 15px; cursor: pointer;">Buscar Histórico</button>
+    </div>
+    
+    <div id="resultado-busca-historico">
+        <!-- Histórico do funcionário buscado aparecerá aqui -->
     </div>
 
     <script src="js/api.js"></script>
