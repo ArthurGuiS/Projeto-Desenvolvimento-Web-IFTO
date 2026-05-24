@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PontoWeb - Painel Funcionário</title>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #007bff; color: white; padding: 10px 20px;">
+        <h1 style="margin: 0; font-size: 1.5rem;">Painel do Funcionário</h1>
+        <button id="btn-sair" style="background: #333; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Sair</button>
+    </div>
+    
+    <div style="padding: 20px;">
+        <button id="btn-bater-ponto" style="padding: 10px 20px; font-size: 1rem; cursor: pointer;">Registrar Ponto</button>
+    
+    <hr>
+    
+    <h2>Meu Histórico</h2>
+    <div id="historico-container">
+        <!-- Registros serão carregados aqui -->
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/funcionario.js"></script>
+</body>
+</html>

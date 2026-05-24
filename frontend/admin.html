@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PontoWeb - Painel Admin</title>
+</head>
+<body>
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #333; color: white; padding: 10px 20px;">
+        <h1 style="margin: 0; font-size: 1.5rem;">Painel do Administrador</h1>
+        <button id="btn-sair" style="background: #ff4444; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer;">Sair</button>
+    </div>
+    
+    <div style="padding: 20px;">
+        <h2>Cadastrar Novo Funcionário</h2>
+    <form id="form-novo-func">
+        <input type="text" id="nome" placeholder="Nome" required>
+        <input type="email" id="email" placeholder="Email" required>
+        <input type="text" id="cpf" placeholder="CPF" required>
+        <button type="submit">Cadastrar</button>
+    </form>
+    
+    <hr>
+    
+    <h2>Lista de Funcionários</h2>
+    <div id="lista-funcionarios">
+        <!-- Funcionários serão carregados aqui -->
+    </div>
+
+    <script src="js/api.js"></script>
+    <script src="js/admin.js"></script>
+</body>
+</html>
