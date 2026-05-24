@@ -38,6 +38,29 @@ const userController = {
     } catch (error) {
       return res.status(500).json({ message: "Erro interno do servidor" });
     }
+  },
+
+  redefinirSenha: async (req, res) => {
+    try {
+      const { usuario_id, nova_senha } = req.body;
+
+      if (!usuario_id || !nova_senha) {
+        return res.status(400).json({ message: "Dados incompletos" });
+      }
+
+      const { data, error } = await supabase
+        .from('usuarios')
+        .update({ senha: nova_senha })
+        .eq('id', usuario_id);
+
+      if (error) {
+        return res.status(500).json({ message: "Erro ao atualizar senha" });
+      }
+
+      return res.status(200).json({ message: "Senha atualizada com sucesso" });
+    } catch (error) {
+      return res.status(500).json({ message: "Erro interno do servidor" });
+    }
   }
 };
 

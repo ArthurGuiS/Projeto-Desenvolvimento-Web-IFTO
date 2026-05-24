@@ -33,11 +33,33 @@ async function recarregarListaDeFuncionarios() {
   const container = document.querySelector('#lista-funcionarios');
   if (container) {
     container.innerHTML = funcionarios.map(func => `
-      <div class="funcionario">
-        <span>${func.nome}</span> - <span>${func.email}</span>
+      <div class="funcionario" style="margin-bottom: 15px; padding: 10px; border: 1px solid #ddd; border-radius: 4px; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <strong>${func.nome}</strong><br>
+            <small>${func.email}</small>
+        </div>
+        <div>
+            <button onclick="promptRedefinirSenha('${func.id}', '${func.nome}')" style="background: #f0ad4e; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Redefinir Senha</button>
+        </div>
       </div>
     `).join('');
   }
+}
+
+async function promptRedefinirSenha(usuarioId, nome) {
+    const novaSenha = prompt(`Digite a nova senha para ${nome}:`);
+    if (novaSenha) {
+        try {
+            const resultado = await api.redefinirSenha(usuarioId, novaSenha);
+            if (resultado.message === "Senha atualizada com sucesso") {
+                alert("Senha atualizada!");
+            } else {
+                alert("Erro: " + resultado.message);
+            }
+        } catch (error) {
+            alert("Erro na comunicação com o servidor.");
+        }
+    }
 }
 
 async function buscarHistoricoPorNome() {

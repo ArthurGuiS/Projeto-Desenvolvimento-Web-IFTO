@@ -36,5 +36,14 @@ const api = {
   async listarFuncionarios() {
     const response = await fetch(`${BASE_URL}/users/funcionarios`);
     return response.json();
+  },
+
+  async redefinirSenha(usuarioId, novaSenha) {
+    const response = await fetch(`${BASE_URL}/users/redefinir-senha`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ usuario_id: usuarioId, nova_senha: novaSenha })
+    });
+    return response.json();
   }
 };
