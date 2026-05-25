@@ -22,6 +22,7 @@ async function carregarFuncionarios() {
                         <th>Nome</th>
                         <th>E-mail</th>
                         <th>CPF</th>
+                        <th>Ações</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -33,6 +34,11 @@ async function carregarFuncionarios() {
                     <td>${f.nome}</td>
                     <td>${f.email}</td>
                     <td>${f.cpf}</td>
+                    <td>
+                        <button class="btn btn-warning btn-sm" onclick="resetarSenhaFuncionario('${f.id}', '${f.nome}')" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                            Resetar Senha
+                        </button>
+                    </td>
                 </tr>
             `;
         });
@@ -43,6 +49,20 @@ async function carregarFuncionarios() {
         container.innerHTML = `<p class="alert alert-danger">Erro ao carregar funcionários: ${error.message}</p>`;
     }
 }
+
+// Função global para ser acessada pelo atributo onclick
+window.resetarSenhaFuncionario = async (id, nome) => {
+    if (!confirm(`Deseja realmente resetar a senha de ${nome} para a senha padrão (mudar123)?`)) {
+        return;
+    }
+
+    try {
+        await apiAlterarSenha(id, "mudar123");
+        alert(`Senha de ${nome} resetada com sucesso para "mudar123"!`);
+    } catch (error) {
+        alert("Erro ao resetar senha: " + error.message);
+    }
+};
 
 // Cadastrar Funcionário
 document.getElementById('form-novo-func').addEventListener('submit', async (e) => {
